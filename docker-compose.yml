@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_PASSWORD: secret
+      PGDATA: /tmp
+
+  back:
+    container_name: back
+    build: .
+    restart: always
+    expose:
+      - 8080
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
