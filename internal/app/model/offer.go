@@ -6,4 +6,5 @@ type Offer struct {
 	Price int
 	Quantity int
 	Available bool
+	SellerId int
 }

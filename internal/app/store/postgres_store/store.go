@@ -15,7 +15,7 @@ func New(conn *pgx.Conn) *Store {
 	}
 }
 
-func (s *Store) User() *OfferRepository {
+func (s *Store) Offer() *OfferRepository {
 	if s.OfferRepository == nil {
 		s.OfferRepository = &OfferRepository{
 			store: s,
