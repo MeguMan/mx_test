@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/MeguMan/mx_test/internal/app/store/postgres_store"
 	"github.com/MeguMan/mx_test/internal/app/xlsxDecoder"
 	"github.com/gorilla/mux"
@@ -10,7 +11,9 @@ import (
 
 type ReqBody struct {
 	SellerId int
+	OfferId int
 	Path string
+	Pattern string
 }
 
 type server struct {
@@ -57,8 +60,15 @@ func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request)
 
 func (s *server) HandleOffersGet() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		rb := ReqBody{}
 		w.Header().Set("Content-Type", "application/json")
-		s.store.Offer().GetAll()
+		err := json.NewDecoder(r.Body).Decode(&rb)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		fmt.Println(rb)
+		s.store.Offer().GetAll(rb.OfferId, rb.SellerId, rb.Pattern)
 		w.WriteHeader(http.StatusOK)
 	}
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func ParseFile(path string) []model.Offer{
-	wb, err := xlsx.OpenFile("samplefile.xlsx")
+	wb, err := xlsx.OpenFile("xlsx_files/samplefile.xlsx")
 	if err != nil {
 		panic(err)
 	}
