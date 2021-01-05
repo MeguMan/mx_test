@@ -10,10 +10,10 @@ import (
 )
 
 type ReqBody struct {
-	SellerId int
-	OfferId int
-	Path string
-	Pattern string
+	SellerId int `json:"seller_id"`
+	OfferId int `json:"offer_id"`
+	Path string `json:"path"`
+	Pattern string `json:"pattern"`
 }
 
 type server struct {
@@ -47,7 +47,11 @@ func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request)
 		err := json.NewDecoder(r.Body).Decode(&rb)
 		oo := xlsxDecoder.ParseFile(rb.Path)
 		for _, o := range oo {
-			or.Create(&o)
+			if o.Available {
+				or.Create(&o)
+			} else {
+				or.Delete(&o)
+			}
 		}
 
 		if err != nil {
@@ -67,8 +71,8 @@ func (s *server) HandleOffersGet() func(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		fmt.Println(rb)
-		s.store.Offer().GetAll(rb.OfferId, rb.SellerId, rb.Pattern)
+		oo, _ := s.store.Offer().GetByPattern(rb.OfferId, rb.SellerId, rb.Pattern)
 		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, oo)
 	}
 }
