@@ -3,6 +3,7 @@ package apiserver
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/MeguMan/mx_test/internal/app/model"
 	"github.com/MeguMan/mx_test/internal/app/store/postgres_store"
 	"github.com/MeguMan/mx_test/internal/app/xlsxDecoder"
 	"github.com/gorilla/mux"
@@ -42,15 +43,24 @@ func (s *server) configureRouter() {
 func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rb := ReqBody{}
+		rowsStats := model.RowsStats{}
 		or := s.store.Offer()
 		w.Header().Set("Content-Type", "application/json")
 		err := json.NewDecoder(r.Body).Decode(&rb)
-		oo := xlsxDecoder.ParseFile(rb.Path)
+		oo, err := xlsxDecoder.ParseFile(rb.Path, &rowsStats)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		for _, o := range oo {
 			if o.Available {
-				or.Create(&o)
+				if or.Exists(o.OfferId, o.SellerId) {
+					or.Update(&o, &rowsStats)
+				} else {
+					or.Create(&o, &rowsStats)
+				}
 			} else {
-				or.Delete(&o)
+				or.Delete(&o, &rowsStats)
 			}
 		}
 
@@ -59,6 +69,8 @@ func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
+		resp, _ := json.Marshal(rowsStats)
+		fmt.Fprint(w, string(resp))
 	}
 }
 
