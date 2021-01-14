@@ -17,16 +17,16 @@ type Resp struct {
 	Href string
 }
 
-func ParseFile(path string, rs *model.RowsStats) ([]model.Offer, error){
+func ParseFile(path string, rs *model.RowsStats, uuid string) ([]model.Offer, error){
 	url, err := getURLForDownloading(path)
 	if err != nil {
 		return nil, err
 	}
-	err = downloadFile(url)
+	err = downloadFile(url, uuid)
 	if err != nil {
 		return nil, err
 	}
-	wb, err := xlsx.OpenFile("downloadedFile.xlsx")
+	wb, err := xlsx.OpenFile(fmt.Sprintf("xlsxFiles/%s.xlsx", uuid))
 	if err != nil {
 		return nil, err
 	}
@@ -36,34 +36,38 @@ func ParseFile(path string, rs *model.RowsStats) ([]model.Offer, error){
 		err = errors.New("sheet does not exist")
 		return nil, err
 	}
-
 	var oo []model.Offer
 
 	for i := 1; i < sh.MaxRow; i++ {
 		o := model.Offer{}
+		errExist := false
 		for i, c := range sh.Rows[i].Cells {
 			switch i {
 			case 0:
 				v, err := strconv.Atoi(c.Value)
 				if err != nil {
 					rs.ErrorRows += 1
+					errExist = true
 				}
 				o.OfferId = v
 			case 1:
 				if c.Value == "" {
 					rs.ErrorRows += 1
+					errExist = true
 				}
 				o.Name = c.Value
 			case 2:
 				v, err := strconv.Atoi(c.Value)
-				if err != nil {
+				if err != nil || v < 0 {
 					rs.ErrorRows += 1
+					errExist = true
 				}
 				o.Price = v
 			case 3:
 				v, err := strconv.Atoi(c.Value)
-				if err != nil {
+				if err != nil || v < 0 {
 					rs.ErrorRows += 1
+					errExist = true
 				}
 				o.Quantity = v
 			case 4:
@@ -73,8 +77,12 @@ func ParseFile(path string, rs *model.RowsStats) ([]model.Offer, error){
 					o.Available = false
 				} else {
 					rs.ErrorRows += 1
+					errExist = true
 				}
 			}
+		}
+		if errExist {
+			continue
 		}
 		oo = append(oo, o)
 	}
@@ -82,14 +90,13 @@ func ParseFile(path string, rs *model.RowsStats) ([]model.Offer, error){
 	return oo, nil
 }
 
-func downloadFile(url string) error {
+func downloadFile(url string, uuid string) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-
-	out, err := os.Create("downloadedFile.xlsx")
+	out, err := os.Create(fmt.Sprintf("xlsxFiles/%s.xlsx", uuid))
 	if err != nil {
 		return err
 	}

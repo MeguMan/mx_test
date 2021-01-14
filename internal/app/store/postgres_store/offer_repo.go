@@ -12,7 +12,6 @@ type OfferRepository struct {
 func (r *OfferRepository) Create(o *model.Offer, rs *model.RowsStats) error {
 	_, err := r.store.conn.Exec(context.Background(), "INSERT INTO offers (offer_id, name, price, quantity, seller_id) VALUES ($1, $2, $3, $4, $5)",
 		o.OfferId, o.Name, o.Price, o.Quantity, o.SellerId)
-
 	rs.CreatedRows += 1
 	return err
 }
@@ -20,7 +19,6 @@ func (r *OfferRepository) Create(o *model.Offer, rs *model.RowsStats) error {
 func (r *OfferRepository) GetByPattern(offerId, sellerId int, pattern string) ([]model.Offer, error) {
 	rows, err := r.store.conn.Query(context.Background(), "SELECT * FROM offers WHERE offer_id = $1 AND seller_id = $2 AND name LIKE $3",
 		offerId, sellerId, pattern + "%")
-
 	var oo []model.Offer
 	for rows.Next() {
 		o := model.Offer{}
@@ -31,7 +29,6 @@ func (r *OfferRepository) GetByPattern(offerId, sellerId int, pattern string) ([
 		}
 		oo = append(oo, o)
 	}
-
 	return oo, err
 }
 
