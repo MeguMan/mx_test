@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	errNotFound = errors.New("row with this key wasn't found")
+	errNotFound = errors.New("task with this id, doesn't exist")
 )
 
 func (l *LRU) Set(key string, value interface{}) {

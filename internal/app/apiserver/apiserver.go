@@ -15,7 +15,7 @@ func Start(dbConfig *Config) error{
 	}
 	defer conn.Close(context.Background())
 	s := postgres_store.New(conn)
-	server := NewServer(*s)
+	server := NewServer(*s, dbConfig.Authorization)
 	return http.ListenAndServe(":8080", server)
 }
 

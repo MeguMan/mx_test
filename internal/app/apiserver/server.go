@@ -10,21 +10,17 @@ import (
 	"github.com/MeguMan/mx_test/internal/app/xlsxDecoder"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 )
-
-type ReqBody struct {
-	SellerId int `json:"seller_id"`
-	OfferId int `json:"offer_id"`
-	Path string `json:"path"`
-	Pattern string `json:"pattern"`
-}
 
 type server struct {
 	router *mux.Router
 	cache  *cache.LRU
 	store  postgres_store.Store
+	oauthToken string
 }
 
 type GoroutineStatus struct {
@@ -37,11 +33,12 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
-func NewServer(store postgres_store.Store) *server {
+func NewServer(store postgres_store.Store, token string) *server {
 	s := &server{
 		router: mux.NewRouter(),
 		cache: cache.NewLru(),
 		store:  store,
+		oauthToken: token,
 	}
 	s.configureRouter()
 	return s
@@ -54,6 +51,14 @@ func (s *server) configureRouter() {
 }
 
 func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request) {
+	type ReqBody struct {
+		SellerId string `json:"seller_id"`
+		Path string `json:"path"`
+	}
+
+	type RespBody struct {
+		Id string `json:"id"`
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		rb := ReqBody{}
 		or := s.store.Offer()
@@ -70,24 +75,32 @@ func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request)
 		uuidWithHyphen := uuid.New()
 		uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
 		g.Id = uuid
-		go s.decodeAndSave(rb, or, uuid, &g)
+		go s.decodeAndSave(or,rb.Path, rb.SellerId, g.Id, &g)
 		w.WriteHeader(http.StatusCreated)
-		fmt.Fprint(w, uuid)
+		resp, _ := json.Marshal(RespBody{Id: g.Id})
+		fmt.Fprint(w, string(resp))
 	}
 }
 
 func (s *server) HandleOffersGet() func(w http.ResponseWriter, r *http.Request) {
+	type ReqBody struct {
+		SellerId   *int `json:"seller_id"`
+		OfferId    *int `json:"offer_id"`
+		Pattern *string `json:"pattern"`
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		rb := ReqBody{}
 		w.Header().Set("Content-Type", "application/json")
-		err := json.NewDecoder(r.Body).Decode(&rb)
+		b, _ := ioutil.ReadAll(r.Body)
+		err := json.Unmarshal(b, &rb)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		oo, _ := s.store.Offer().GetByPattern(rb.OfferId, rb.SellerId, rb.Pattern)
+		resp, _ := json.Marshal(oo)
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, oo)
+		fmt.Fprint(w, string(resp))
 	}
 }
 
@@ -113,9 +126,24 @@ func (s *server) HandleOffersStatus() func(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (s *server) decodeAndSave(rb ReqBody, or store.OfferRepository, uuid string, g *GoroutineStatus) {
+func (s *server) decodeAndSave(or store.OfferRepository,path, sellerId, uuid string, g *GoroutineStatus) {
 	s.cache.Set(uuid, g)
-	oo, err := xlsxDecoder.ParseFile(rb.Path, g.RowsStats, uuid)
+	url, err := xlsxDecoder.GetURLForDownloading(path, s.oauthToken)
+	if url == "" {
+		fmt.Println("url is empty")
+		return
+	}
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	err = xlsxDecoder.DownloadFile(url, uuid)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	sId, _ := strconv.Atoi(sellerId)
+	oo, err := xlsxDecoder.ParseFile(g.RowsStats, uuid, sId)
 	if err != nil {
 		fmt.Println(err)
 	}
