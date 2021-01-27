@@ -1,4 +1,4 @@
 {
   "database_url": "postgres://postgres:secret@db:5432/postgres?sslmode=disable",
-  "Authorization": "OAuth AgAAAAA1z4O5AADLW7ibSa25TUIVocRFVAYdP1Q"
+  "authorization": "OAuth AgAAAAA1z4O5AADLW7ibSa25TUIVocRFVAYdP1Q"
 }
