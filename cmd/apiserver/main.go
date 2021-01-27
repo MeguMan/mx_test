@@ -9,7 +9,7 @@ import (
 
 func main() {
 	dbConfig := apiserver.NewConfig()
-	configFile, err := os.Open("configs/db.json")
+	configFile, err := os.Open("configs/config.json")
 	if err != nil {
 		log.Fatal(err)
 	}
