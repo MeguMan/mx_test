@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -21,12 +20,6 @@ type server struct {
 	cache  *cache.LRU
 	store  postgres_store.Store
 	oauthToken string
-}
-
-type GoroutineStatus struct {
-	Id string
-	Finished bool
-	RowsStats *model.RowsStats
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +45,7 @@ func (s *server) configureRouter() {
 
 func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request) {
 	type ReqBody struct {
-		SellerId string `json:"seller_id"`
+		SellerId int `json:"seller_id"`
 		Path string `json:"path"`
 	}
 
@@ -63,7 +56,7 @@ func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request)
 		rb := ReqBody{}
 		or := s.store.Offer()
 		rs := &model.RowsStats{}
-		g := GoroutineStatus{
+		g := model.GoroutineStatus{
 			RowsStats: rs,
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -73,8 +66,7 @@ func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		uuidWithHyphen := uuid.New()
-		uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
-		g.Id = uuid
+		g.Id = strings.Replace(uuidWithHyphen.String(), "-", "", -1)
 		go s.decodeAndSave(or,rb.Path, rb.SellerId, g.Id, &g)
 		w.WriteHeader(http.StatusCreated)
 		resp, _ := json.Marshal(RespBody{Id: g.Id})
@@ -113,9 +105,9 @@ func (s *server) HandleOffersStatus() func(w http.ResponseWriter, r *http.Reques
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if i.(*GoroutineStatus).Finished {
+		if i.(*model.GoroutineStatus).Finished {
 			w.WriteHeader(http.StatusOK)
-			resp, _ := json.Marshal(i.(*GoroutineStatus).RowsStats)
+			resp, _ := json.Marshal(i.(*model.GoroutineStatus).RowsStats)
 			fmt.Fprint(w, "task is finished\n", string(resp))
 			return
 		} else {
@@ -126,7 +118,7 @@ func (s *server) HandleOffersStatus() func(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (s *server) decodeAndSave(or store.OfferRepository,path, sellerId, uuid string, g *GoroutineStatus) {
+func (s *server) decodeAndSave(or store.OfferRepository,path string, sellerId int, uuid string, g *model.GoroutineStatus) {
 	s.cache.Set(uuid, g)
 	url, err := xlsxDecoder.GetURLForDownloading(path, s.oauthToken)
 	if url == "" {
@@ -142,8 +134,7 @@ func (s *server) decodeAndSave(or store.OfferRepository,path, sellerId, uuid str
 		fmt.Println(err)
 		return
 	}
-	sId, _ := strconv.Atoi(sellerId)
-	oo, err := xlsxDecoder.ParseFile(g.RowsStats, uuid, sId)
+	oo, err := xlsxDecoder.ParseFile(g.RowsStats, uuid, sellerId)
 	if err != nil {
 		fmt.Println(err)
 	}

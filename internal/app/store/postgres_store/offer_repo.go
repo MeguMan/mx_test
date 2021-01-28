@@ -12,7 +12,6 @@ type OfferRepository struct {
 }
 
 func (r *OfferRepository) Create(o *model.Offer, rs *model.RowsStats) error {
-	fmt.Println("create")
 	_, err := r.store.conn.Exec(context.Background(), "INSERT INTO offers (offer_id, name, price, quantity, seller_id) VALUES ($1, $2, $3, $4, $5)",
 		o.OfferId, o.Name, o.Price, o.Quantity, o.SellerId)
 	fmt.Println(o.OfferId, o.Name, o.Price, o.Quantity, o.SellerId)
@@ -100,7 +99,6 @@ func (r *OfferRepository) Exists(offerId, sellerId int) bool {
 	var exists bool
 	_ = r.store.conn.QueryRow(context.Background(), "SELECT EXISTS(SELECT 1 FROM offers WHERE offer_id = $1 AND seller_id = $2)",
 		offerId, sellerId).Scan(&exists)
-	fmt.Println(offerId, sellerId, exists)
 	return exists
 }
 
