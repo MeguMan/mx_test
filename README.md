@@ -5,7 +5,8 @@
 #### /offers POST
 Path это путь к файлу на яндекс диске, по умолчанию в конфиге указан 
 мой токен, получить свой можно по 
-ссылке https://yandex.ru/dev/disk/poligon/
+ссылке https://yandex.ru/dev/disk/poligon/.
+Данные в файле должны обязательно находиться на первом листе.
 
 В ответе мы получаем id по которому мы можем узнать состояние работы над нашим запросом.
 
@@ -19,7 +20,7 @@ Request body example:
 Request response example:
 ```json
 {
-    "id": "655ec1d62bbc49399397ba13ee78f3b0"
+    "key": "655ec1d62bbc49399397ba13ee78f3b0"
 }
 ```
 
@@ -57,6 +58,7 @@ Request response example:
 
 #### /offers/status/{id} GET
 Показывает статус запроса по id, который мы получили из POST запроса.
+Все статусы хранятся в памяти.
 
 Request response example:
 ```json

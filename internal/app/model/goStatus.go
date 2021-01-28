@@ -1,7 +1,7 @@
 package model
 
 type GoroutineStatus struct {
-	Id string
+	Key string
 	Finished bool
 	RowsStats *RowsStats
 }

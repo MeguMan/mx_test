@@ -50,7 +50,7 @@ func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request)
 	}
 
 	type RespBody struct {
-		Id string `json:"id"`
+		Key string `json:"key"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		rb := ReqBody{}
@@ -66,10 +66,10 @@ func (s *server) HandleOffersPost() func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		uuidWithHyphen := uuid.New()
-		g.Id = strings.Replace(uuidWithHyphen.String(), "-", "", -1)
-		go s.decodeAndSave(or,rb.Path, rb.SellerId, g.Id, &g)
+		g.Key = strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+		go s.decodeAndSave(or,rb.Path, rb.SellerId, g.Key, &g)
 		w.WriteHeader(http.StatusCreated)
-		resp, _ := json.Marshal(RespBody{Id: g.Id})
+		resp, _ := json.Marshal(RespBody{Key: g.Key})
 		fmt.Fprint(w, string(resp))
 	}
 }
