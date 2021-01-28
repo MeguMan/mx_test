@@ -24,8 +24,7 @@ func ParseFile(rs *model.RowsStats, uuid string, sellerId int) ([]model.Offer, e
 	if err != nil {
 		return nil, err
 	}
-	sheetName := "SampleList"
-	sh, ok := wb.Sheet[sheetName]
+	sh, ok := wb.Sheet[wb.Sheets[0].Name]
 	if !ok {
 		err = errors.New("sheet does not exist")
 		return nil, err
