@@ -62,6 +62,14 @@ Request response example:
 
 Request response example:
 ```json
-task is finished
-{"CreatedRows":4,"UpdatedRows":0,"DeletedRows":1,"ErrorRows":3}
+{
+    "Key": "e798f6d1cdfa49d68b7e0eaa773dcd12",
+    "Finished": true,
+    "RowsStats": {
+        "CreatedRows": 0,
+        "UpdatedRows": 4,
+        "DeletedRows": 1,
+        "ErrorRows": 3
+    }
+}
 ```
