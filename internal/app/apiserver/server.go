@@ -98,6 +98,7 @@ func (s *server) HandleOffersGet() func(w http.ResponseWriter, r *http.Request) 
 
 func (s *server) HandleOffersStatus() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		vars := mux.Vars(r)
 		id := vars["id"]
 		i, err := s.cache.Get(id)
@@ -105,16 +106,9 @@ func (s *server) HandleOffersStatus() func(w http.ResponseWriter, r *http.Reques
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if i.(*model.GoroutineStatus).Finished {
-			w.WriteHeader(http.StatusOK)
-			resp, _ := json.Marshal(i.(*model.GoroutineStatus).RowsStats)
-			fmt.Fprint(w, "task is finished\n", string(resp))
-			return
-		} else {
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, "task still running")
-			return
-		}
+		w.WriteHeader(http.StatusOK)
+		resp, _ := json.Marshal(i)
+		fmt.Fprint(w,string(resp))
 	}
 }
 
