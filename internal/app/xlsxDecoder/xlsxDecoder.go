@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 )
 
@@ -19,8 +18,8 @@ type Resp struct {
 	Error string
 }
 
-func ParseFile(rs *model.RowsStats, uuid string, sellerId int) ([]model.Offer, error){
-	wb, err := xlsx.OpenFile(fmt.Sprintf("xlsxFiles/%s.xlsx", uuid))
+func ParseFile(rs *model.RowsStats, name string, sellerId int) ([]model.Offer, error){
+	wb, err := xlsx.OpenFile(fmt.Sprintf("%s.xlsx", name))
 	if err != nil {
 		return nil, err
 	}
@@ -81,23 +80,16 @@ func ParseFile(rs *model.RowsStats, uuid string, sellerId int) ([]model.Offer, e
 		}
 		oo = append(oo, o)
 	}
-
 	return oo, nil
 }
 
 func DownloadFile(url string, name string) error {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	exPath := filepath.Dir(ex)
-	fmt.Println(exPath)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	out, err := os.Create(fmt.Sprintf("xlsxFiles/%s.xlsx", name))
+	out, err := os.Create(fmt.Sprintf("%s.xlsx", name))
 	if err != nil {
 		return err
 	}

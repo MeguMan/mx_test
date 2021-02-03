@@ -133,6 +133,11 @@ func (s *server) decodeAndSave(or store.OfferRepository,path string, sellerId in
 	if err != nil {
 		fmt.Println(err)
 	}
+	err = os.Remove(fmt.Sprintf("%s.xlsx", uuid))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	for _, o := range oo {
 		if o.Available {
 			if or.Exists(o.OfferId, o.SellerId) {
@@ -155,8 +160,4 @@ func (s *server) decodeAndSave(or store.OfferRepository,path string, sellerId in
 	}
 	g.Finished = true
 	s.cache.Set(uuid, g)
-	err = os.Remove(fmt.Sprintf("xlsxFiles/%s.xlsx", uuid))
-	if err != nil {
-		fmt.Println(err)
-	}
 }
