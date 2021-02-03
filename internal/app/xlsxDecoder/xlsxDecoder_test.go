@@ -11,7 +11,7 @@ func TestParseFile(t *testing.T) {
 }
 
 func TestGetURLForDownloading(t *testing.T) {
-	url, err := GetURLForDownloading("asd/table.xlsx", "OAuth AgAAAAA1z4O5AADLW7ibSa25TUIVocRFVAYdP1Q")
+	url, err := GetURLForDownloading("avito-test/table.xlsx", "OAuth AgAAAAA1z4O5AADLW7ibSa25TUIVocRFVAYdP1Q")
 	assert.NoError(t, err)
 	assert.NotEqual(t, url, "")
 }

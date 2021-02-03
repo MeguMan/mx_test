@@ -2,7 +2,6 @@ package postgres_store
 
 import (
 	"context"
-	"fmt"
 	"github.com/MeguMan/mx_test/internal/app/model"
 	"github.com/jackc/pgx/v4"
 )
@@ -14,7 +13,6 @@ type OfferRepository struct {
 func (r *OfferRepository) Create(o *model.Offer, rs *model.RowsStats) error {
 	_, err := r.store.conn.Exec(context.Background(), "INSERT INTO offers (offer_id, name, price, quantity, seller_id) VALUES ($1, $2, $3, $4, $5)",
 		o.OfferId, o.Name, o.Price, o.Quantity, o.SellerId)
-	fmt.Println(o.OfferId, o.Name, o.Price, o.Quantity, o.SellerId)
 	rs.CreatedRows += 1
 	return err
 }
