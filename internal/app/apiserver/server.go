@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -154,4 +155,8 @@ func (s *server) decodeAndSave(or store.OfferRepository,path string, sellerId in
 	}
 	g.Finished = true
 	s.cache.Set(uuid, g)
+	err = os.Remove(fmt.Sprintf("xlsxFiles/%s.xlsx", uuid))
+	if err != nil {
+		fmt.Println(err)
+	}
 }
