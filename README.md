@@ -1,6 +1,7 @@
 ## Тестовое задание для стажера в юнит Merchant Experience
 ### Quick start:
     docker-compose up   
+    
 ### API methods:  
 #### /offers POST
 Path это путь к файлу на яндекс диске, по умолчанию в конфиге указан 
