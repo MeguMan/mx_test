@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -115,27 +116,43 @@ func (s *server) HandleOffersStatus() func(w http.ResponseWriter, r *http.Reques
 
 func (s *server) decodeAndSave(or store.OfferRepository,path string, sellerId int, uuid string, g *model.GoroutineStatus) {
 	s.cache.Set(uuid, g)
-	url, err := xlsxDecoder.GetURLForDownloading(path, s.oauthToken)
-	if url == "" {
-		fmt.Println("url is empty")
-		return
+	url := path
+	if !isValidUrl(url){
+		var err error
+		url, err = xlsxDecoder.GetURLForDownloading(path, s.oauthToken)
+		if url == "" {
+			fmt.Println("url is empty")
+			g.Error = "Couldn't get URL for downloading file from this path"
+			g.Finished = true
+			return
+		}
+		if err != nil {
+			fmt.Println(err)
+			g.Error = fmt.Sprintf("%s6", err)
+			g.Finished = true
+			return
+		}
 	}
+
+	err := xlsxDecoder.DownloadFile(url, uuid)
 	if err != nil {
 		fmt.Println(err)
-		return
-	}
-	err = xlsxDecoder.DownloadFile(url, uuid)
-	if err != nil {
-		fmt.Println(err)
+		g.Error = fmt.Sprintf("%s3", err)
+		g.Finished = true
 		return
 	}
 	oo, err := xlsxDecoder.ParseFile(g.RowsStats, uuid, sellerId)
 	if err != nil {
 		fmt.Println(err)
+		g.Error = fmt.Sprintf("%s4", err)
+		g.Finished = true
+		return
 	}
 	err = os.Remove(fmt.Sprintf("%s.xlsx", uuid))
 	if err != nil {
 		fmt.Println(err)
+		g.Error = fmt.Sprintf("%s5", err)
+		g.Finished = true
 		return
 	}
 	for _, o := range oo {
@@ -160,4 +177,18 @@ func (s *server) decodeAndSave(or store.OfferRepository,path string, sellerId in
 	}
 	g.Finished = true
 	s.cache.Set(uuid, g)
+}
+
+func isValidUrl(toTest string) bool {
+	_, err := url.ParseRequestURI(toTest)
+	if err != nil {
+		return false
+	}
+
+	u, err := url.Parse(toTest)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return false
+	}
+
+	return true
 }
